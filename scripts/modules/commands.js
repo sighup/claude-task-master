@@ -1269,6 +1269,48 @@ function registerCommands(programInstance) {
 			await listTasks(tasksPath, statusFilter, reportPath, withSubtasks);
 		});
 
+	// start command
+	programInstance
+		.command('start')
+		.alias('interactive')
+		.description('Launch interactive terminal UI for task management')
+		.action(async () => {
+			try {
+				const { spawn } = await import('child_process');
+				const { fileURLToPath } = await import('url');
+				const { dirname, join } = await import('path');
+
+				const __filename = fileURLToPath(import.meta.url);
+				const __dirname = dirname(__filename);
+				const inkCliPath = join(__dirname, '..', 'start-ui.jsx');
+
+				const child = spawn('npx', ['tsx', inkCliPath], {
+					stdio: 'inherit',
+					cwd: process.cwd()
+				});
+
+				child.on('error', (error) => {
+					console.error(chalk.red('Error launching UI:'), error.message);
+					process.exit(1);
+				});
+
+				child.on('exit', (code) => {
+					process.exit(code || 0);
+				});
+			} catch (error) {
+				console.error(
+					chalk.red('Error starting interactive UI:'),
+					error.message
+				);
+				console.error(
+					chalk.gray(
+						'Make sure all dependencies are installed with: npm install'
+					)
+				);
+				process.exit(1);
+			}
+		});
+
 	// expand command
 	programInstance
 		.command('expand')

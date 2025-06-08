@@ -99,17 +99,27 @@
 		"whatwg-url": "^11.0.0"
 	},
 	"devDependencies": {
+		"@babel/core": "^7.27.4",
+		"@babel/preset-env": "^7.27.2",
+		"@babel/preset-react": "^7.27.1",
 		"@biomejs/biome": "^1.9.4",
 		"@changesets/changelog-github": "^0.5.1",
 		"@changesets/cli": "^2.28.1",
+		"@inkjs/ui": "^2.0.0",
+		"@testing-library/react": "^16.3.0",
 		"@types/jest": "^29.5.14",
+		"babel-jest": "^30.0.0-beta.3",
+		"delay": "^6.0.0",
 		"execa": "^8.0.1",
 		"ink": "^5.0.1",
+		"ink-testing-library": "^4.0.0",
 		"jest": "^29.7.0",
+		"jest-environment-jsdom": "^30.0.0-beta.3",
 		"jest-environment-node": "^29.7.0",
 		"mock-fs": "^5.5.0",
 		"prettier": "^3.5.3",
 		"react": "^18.3.1",
+		"react-dom": "^18.3.1",
 		"supertest": "^7.1.0",
 		"tsx": "^4.16.2"
 	}

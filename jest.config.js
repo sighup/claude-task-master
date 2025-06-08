@@ -15,13 +15,18 @@ export default {
 	roots: ['<rootDir>/tests'],
 
 	// The glob patterns Jest uses to detect test files
-	testMatch: ['**/__tests__/**/*.js', '**/?(*.)+(spec|test).js'],
+	testMatch: ['**/__tests__/**/*.(js|jsx)', '**/?(*.)+(spec|test).(js|jsx)'],
 
-	// Transform files
-	transform: {},
+	// Transform files - apply babel-jest to JSX files and start-ui test files
+	transform: {
+		'^.+\\.jsx$': 'babel-jest',
+		'^.+/start-ui/.+\\.test\\.js$': 'babel-jest'
+	},
 
-	// Disable transformations for node_modules
-	transformIgnorePatterns: ['/node_modules/'],
+	// Disable transformations for node_modules except for ink and react
+	transformIgnorePatterns: [
+		'/node_modules/(?!(ink|ink-testing-library|@inkjs|cli-boxes|ansi-escapes|strip-ansi|string-width|wrap-ansi)/)'
+	],
 
 	// Set moduleNameMapper for absolute paths
 	moduleNameMapper: {
@@ -30,6 +35,12 @@ export default {
 
 	// Setup module aliases
 	moduleDirectories: ['node_modules', '<rootDir>'],
+
+	// Module file extensions
+	moduleFileExtensions: ['js', 'jsx', 'json', 'node'],
+
+	// Treat these extensions as ESM - only JSX files
+	extensionsToTreatAsEsm: ['.jsx'],
 
 	// Configure test coverage thresholds
 	coverageThreshold: {

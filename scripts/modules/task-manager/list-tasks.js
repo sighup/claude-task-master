@@ -194,25 +194,8 @@ function listTasks(
 
 		// For JSON output, return structured data
 		if (outputFormat === 'json') {
-			// *** Modification: Remove 'details' field for JSON output ***
-			const tasksWithoutDetails = filteredTasks.map((task) => {
-				// <-- USES filteredTasks!
-				// Omit 'details' from the parent task
-				const { details, ...taskRest } = task;
-
-				// If subtasks exist, omit 'details' from them too
-				if (taskRest.subtasks && Array.isArray(taskRest.subtasks)) {
-					taskRest.subtasks = taskRest.subtasks.map((subtask) => {
-						const { details: subtaskDetails, ...subtaskRest } = subtask;
-						return subtaskRest;
-					});
-				}
-				return taskRest;
-			});
-			// *** End of Modification ***
-
 			return {
-				tasks: tasksWithoutDetails, // <--- THIS IS THE ARRAY BEING RETURNED
+				tasks: filteredTasks, // Include all task data including details
 				filter: statusFilter || 'all', // Return the actual filter used
 				stats: {
 					total: totalTasks,
