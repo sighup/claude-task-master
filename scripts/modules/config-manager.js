@@ -506,6 +506,7 @@ function isApiKeySet(providerName, session = null, projectRoot = null) {
 	const envVarName = keyMap[providerKey];
 	const apiKeyValue = resolveEnvVariable(envVarName, session, projectRoot);
 
+
 	// Check if the key exists, is not empty, and is not a placeholder
 	return (
 		apiKeyValue &&

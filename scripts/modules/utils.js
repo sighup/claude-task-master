@@ -32,6 +32,7 @@ let silentMode = false;
  * @returns {string|undefined} The value of the environment variable or undefined if not found.
  */
 function resolveEnvVariable(key, session = null, projectRoot = null) {
+
 	// 1. Check session.env
 	if (session?.env?.[key]) {
 		return session.env[key];
@@ -40,6 +41,7 @@ function resolveEnvVariable(key, session = null, projectRoot = null) {
 	// 2. Read .env file at projectRoot
 	if (projectRoot) {
 		const envPath = path.join(projectRoot, '.env');
+		// console.log(`DEBUG: Looking for ${key} in ${envPath}`); // Uncomment for debugging
 		if (fs.existsSync(envPath)) {
 			try {
 				const envFileContent = fs.readFileSync(envPath, 'utf-8');

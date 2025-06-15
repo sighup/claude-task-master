@@ -308,16 +308,29 @@ tempProgram.commands.forEach((cmd) => {
 		return;
 	}
 
-	// Create a new command with the same name and description
-	const newCmd = program.command(cmd.name()).description(cmd.description());
+	if (cmd.name() === 'start') {
+		// For the 'start' command, add it directly to preserve its special action.
+		program.addCommand(cmd);
+	} else {
+		// For all other commands, create a new command that proxies to dev.js
+		const newCmd = program.command(cmd.name()).description(cmd.description());
 
-	// Copy all options
-	cmd.options.forEach((opt) => {
-		newCmd.option(opt.flags, opt.description, opt.defaultValue);
-	});
+		// Copy aliases as well to ensure shortcuts (e.g. "interactive") work in the global CLI
+		if (typeof cmd.aliases === 'function') {
+			const aliases = cmd.aliases();
+			if (Array.isArray(aliases) && aliases.length > 0) {
+				aliases.forEach((alias) => newCmd.alias(alias));
+			}
+		}
 
-	// Set the action to proxy to dev.js
-	newCmd.action(createDevScriptAction(cmd.name()));
+		// Copy all options
+		cmd.options.forEach((opt) => {
+			newCmd.option(opt.flags, opt.description, opt.defaultValue);
+		});
+
+		// Set the action to proxy to dev.js
+		newCmd.action(createDevScriptAction(cmd.name()));
+	}
 });
 
 // Parse the command line arguments

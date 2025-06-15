@@ -1108,9 +1108,7 @@ function registerCommands(programInstance) {
 	// update-subtask command
 	programInstance
 		.command('update-subtask')
-		.description(
-			'Update a subtask by appending additional timestamped information'
-		)
+		.description('Update a subtask by appending additional timestamped information')
 		.option(
 			'-f, --file <file>',
 			'Path to the tasks file',
@@ -1420,6 +1418,84 @@ function registerCommands(programInstance) {
 				tag,
 				{ projectRoot }
 			);
+		});
+
+	// start command
+	programInstance
+		.command('start')
+		.alias('interactive')
+		.description('Launch interactive terminal UI for task management')
+		.action(async () => {
+			try {
+				const { default: crossSpawn } = await import('cross-spawn');
+				const { fileURLToPath } = await import('url');
+				const { dirname, join } = await import('path');
+				const { createRequire } = await import('module');
+
+				const __filename = fileURLToPath(import.meta.url);
+				const __dirname = dirname(__filename);
+				const inkCliPath = join(__dirname, '..', 'start-ui.jsx');
+
+								const projectRoot = join(__dirname, '..', '..');
+				const localTsxPath = join(projectRoot, 'node_modules', '.bin', 'tsx');
+
+				if (!fs.existsSync(localTsxPath)) {
+					console.error(
+						chalk.red('Error: Local tsx binary not found. Please ensure tsx is installed via `npm install --save-dev tsx`.')
+					);
+					process.exit(1);
+				}
+				if (!fs.existsSync(inkCliPath)) {
+					console.error(chalk.red('Error: Ink UI entry script not found.'));
+					process.exit(1);
+				}
+
+				const child = crossSpawn(localTsxPath, [inkCliPath], {
+					stdio: 'inherit',
+					cwd: process.cwd()
+				});
+
+				// Forward termination signals
+				const forwardSignal = (signal) => {
+					if (child && !child.killed) {
+						child.kill(signal);
+					}
+				};
+				process.once('SIGINT', () => forwardSignal('SIGINT'));
+				process.once('SIGTERM', () => forwardSignal('SIGTERM'));
+
+				child.on('close', (code) => {
+					if (code !== 0) {
+						console.log(`UI process exited with code ${code}`);
+					}
+				});
+
+				child.on('exit', (code, signal) => {
+					process.removeListener('SIGINT', forwardSignal);
+					process.removeListener('SIGTERM', forwardSignal);
+					if (signal) {
+						process.kill(process.pid, signal);
+					} else {
+						process.exit(code || 0);
+					}
+				});
+
+				child.on('error', (error) => {
+					console.error(chalk.red('Error launching UI:'), error.message);
+					process.exit(1);
+				});
+			} catch (error) {
+				console.error(
+					chalk.red('Error starting interactive UI:'),
+					error.message
+				);
+				console.error(
+					chalk.gray(
+						'Make sure all dependencies are installed with: npm install'
+					)
+				);
+				process.exit(1);
+			}
 		});
 
 	// expand command
@@ -2635,13 +2711,13 @@ ${result.result}
 
 	// Helper function to show add-subtask command help
 	function showAddSubtaskHelp() {
-		console.log(
-			boxen(
-				`${chalk.white.bold('Add Subtask Command Help')}\n\n${chalk.cyan('Usage:')}\n  task-master add-subtask --parent=<id> [options]\n\n${chalk.cyan('Options:')}\n  -p, --parent <id>         Parent task ID (required)\n  -i, --task-id <id>        Existing task ID to convert to subtask\n  -t, --title <title>       Title for the new subtask\n  -d, --description <text>  Description for the new subtask\n  --details <text>          Implementation details for the new subtask\n  --dependencies <ids>      Comma-separated list of dependency IDs\n  -s, --status <status>     Status for the new subtask (default: "pending")\n  -f, --file <file>         Path to the tasks file (default: "${TASKMASTER_TASKS_FILE}")\n  --skip-generate           Skip regenerating task files\n\n${chalk.cyan('Examples:')}\n  task-master add-subtask --parent=5 --task-id=8\n  task-master add-subtask -p 5 -t "Implement login UI" -d "Create the login form"`,
-				{ padding: 1, borderColor: 'blue', borderStyle: 'round' }
-			)
-		);
-	}
+			console.log(
+				boxen(
+					`${chalk.white.bold('Add Subtask Command Help')}\n\n${chalk.cyan('Usage:')}\n  task-master add-subtask --parent=<id> [options]\n\n${chalk.cyan('Options:')}\n  -p, --parent <id>         Parent task ID (required)\n  -i, --task-id <id>        Existing task ID to convert to subtask\n  -t, --title <title>       Title for the new subtask\n  -d, --description <text>  Description for the new subtask\n  --details <text>          Implementation details for the new subtask\n  --dependencies <ids>      Comma-separated list of dependency IDs\n  -s, --status <status>     Status for the new subtask (default: "pending")\n  -f, --file <file>         Path to the tasks file (default: "${TASKMASTER_TASKS_FILE}")\n  --skip-generate           Skip regenerating task files\n\n${chalk.cyan('Examples:')}\n  task-master add-subtask --parent=5 --task-id=8\n  task-master add-subtask -p 5 -t "Implement login UI" -d "Create the login form"`,
+					{ padding: 1, borderColor: 'blue', borderStyle: 'round' }
+				)
+			);
+		}
 
 	// remove-subtask command
 	programInstance
@@ -2779,31 +2855,31 @@ ${result.result}
 		});
 
 	// Helper function to show remove-subtask command help
-	function showRemoveSubtaskHelp() {
-		console.log(
-			boxen(
-				chalk.white.bold('Remove Subtask Command Help') +
-					'\n\n' +
-					chalk.cyan('Usage:') +
-					'\n' +
-					`  task-master remove-subtask --id=<parentId.subtaskId> [options]\n\n` +
-					chalk.cyan('Options:') +
-					'\n' +
-					'  -i, --id <id>       Subtask ID(s) to remove in format "parentId.subtaskId" (can be comma-separated, required)\n' +
-					'  -c, --convert       Convert the subtask to a standalone task instead of deleting it\n' +
-					'  -f, --file <file>   Path to the tasks file (default: "' +
-					TASKMASTER_TASKS_FILE +
-					'")\n' +
-					'  --skip-generate     Skip regenerating task files\n\n' +
-					chalk.cyan('Examples:') +
-					'\n' +
-					'  task-master remove-subtask --id=5.2\n' +
-					'  task-master remove-subtask --id=5.2,6.3,7.1\n' +
-					'  task-master remove-subtask --id=5.2 --convert',
-				{ padding: 1, borderColor: 'blue', borderStyle: 'round' }
-			)
-		);
-	}
+		function showRemoveSubtaskHelp() {
+			console.log(
+				boxen(
+					chalk.white.bold('Remove Subtask Command Help') +
+						'\n\n' +
+						chalk.cyan('Usage:') +
+						'\n' +
+						`  task-master remove-subtask --id=<parentId.subtaskId> [options]\n\n` +
+						chalk.cyan('Options:') +
+						'\n' +
+						'  -i, --id <id>       Subtask ID(s) to remove in format "parentId.subtaskId" (can be comma-separated, required)\n' +
+						'  -c, --convert       Convert the subtask to a standalone task instead of deleting it\n' +
+						'  -f, --file <file>   Path to the tasks file (default: "' +
+						TASKMASTER_TASKS_FILE +
+						'")\n' +
+						'  --skip-generate     Skip regenerating task files\n\n' +
+						chalk.cyan('Examples:') +
+						'\n' +
+						'  task-master remove-subtask --id=5.2\n' +
+						'  task-master remove-subtask --id=5.2,6.3,7.1\n' +
+						'  task-master remove-subtask --id=5.2 --convert',
+					{ padding: 1, borderColor: 'blue', borderStyle: 'round' }
+				)
+			);
+		}
 
 	// Helper function to show tags command help
 	function showTagsHelp() {
@@ -3022,7 +3098,7 @@ ${result.result}
 					} else {
 						// Correctly extract the task object from the result of findTaskById
 						const findResult = findTaskById(data.tasks, taskId);
-						const taskObject = findResult.task; // Get the actual task/subtask object
+						const taskObject = findResult.task; // Get the actual task object
 
 						if (taskObject) {
 							existingTasksToRemove.push({ id: taskId, task: taskObject }); // Push the actual task object

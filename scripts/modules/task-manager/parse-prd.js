@@ -61,6 +61,7 @@ const prdResponseSchema = z.object({
  * @param {string} [outputFormat='text'] - Output format ('text' or 'json').
  */
 async function parsePRD(prdPath, tasksPath, numTasks, options = {}) {
+	
 	const {
 		reportProgress,
 		mcpLog,
